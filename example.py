@@ -107,12 +107,58 @@ def batch_payment(filename: str, papply=False, **kwargs):
 		if not papply:
 			print('{} processed.'.format(row_dict))
 
+	if papply:
+		export_all()
+	else:
+		export_all(cache=True)
+
+
+def export_all(cache=False):
+	with open(utils.ID_NUM_FILE, 'r') as f:
+		i = int(f.read())
+	df_dict = {'id': [], 'name': [], 'incash': [], 'outcash': [], 'netcash': []}
+	for nid in range(i):
+		node = utils.load_people_node(nid)
+		if cache:
+			df_dict['id'].append(nid)
+			df_dict['name'].append(node.name)
+			df_dict['incash'].append(node.incash_cache)
+			df_dict['outcash'].append(node.outcash_cache)
+			df_dict['netcash'].append(node.incash_cache- node.outcash_cache)
+		else:
+			df_dict['id'].append(nid)
+			df_dict['name'].append(node.name)
+			df_dict['incash'].append(node.incash)
+			df_dict['outcash'].append(node.outcash)
+			df_dict['netcash'].append(node.incash - node.outcash)
+	df = pd.DataFrame(df_dict)
+	filename = 'output_cache.csv' if cache else 'output.csv'
+	with open(filename, 'w') as f:
+		df.to_csv(f, index=False, line_terminator='\n')
+
+
+def reset_all(cache=False):
+	with open(utils.ID_NUM_FILE, 'r') as f:
+		i = int(f.read())
+	for nid in range(i):
+		node = utils.load_people_node(nid)
+		if not cache:
+			node.incash = 0.
+			node.outcash = 0.
+		node.incash_cache = 0.
+		node.outcash_cache = 0.
+		node._incash_cache = 0.
+		node._outcash_cache = 0.
+		node.dump_people_node()
+
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument('func', choices=['people', 'payment', 'apply'])
-	parser.add_argument('file', type=str)
+	parser.add_argument('func', choices=['people', 'payment', 'apply', 'reset', 'reset_cache'])
+	parser.add_argument('--file', type=str)
 	args = parser.parse_args()
+	if args.func in ['people', 'payment', 'apply'] and args.file is None:
+		parser.error('Function {} required --file.'.format(args.func))
 
 	if args.func == 'people':
 		batch_new_people(args.file)
@@ -120,3 +166,7 @@ if __name__ == '__main__':
 		batch_payment(args.file)
 	if args.func == 'apply':
 		batch_payment(args.file, papply=True)
+	if args.func == 'reset_cache':
+		reset_all(cache=True)
+	if args.func == 'reset':
+		reset_all()

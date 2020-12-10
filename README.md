@@ -14,14 +14,14 @@
 
 ## Script运行方法
 ```
-python example.py <func> <file>
+python example.py <func> [--file <file>]
 ```
-func: 运行方式，可以是people, payment, apply中的一种
+func: 运行方式，可以是people, payment, apply, reset中的一种
 file: 数据文件
 
 ## 加人
 ```
-python example.py people <people_file>
+python example.py people --file <people_file>
 ```
 
 people_file的格式：
@@ -33,7 +33,7 @@ people_file的格式：
 
 ## 付款
 ```
-python example.py payment <payment_file>
+python example.py payment --file <payment_file>
 ```
 
 payment_file的格式：
@@ -43,12 +43,25 @@ payment_file的格式：
 | 付款人2(id) | 金额2(数字) | 类型2(字符串) |
 | ... | ... | ... |
 
+此指令会计算所有账户并将结果保存在缓存参数里，并输出output_cache.csv文件。
+
 ## 确认付款
 ```
-python example.py apply <payment_file>
+python example.py apply --file <payment_file>
 ```
 
-payment_file的格式同上。
+payment_file的格式同上。此指令把缓存参数里的计算结果复写在数据里，并输出output.csv文件。
+
+## 重置所有缓存参数
+```
+python example.py reset_cache
+```
+
+
+## 重置所有账户
+```
+python example.py reset
+```
 
 ## 更改设置
 utils.py里存有设置变量：
