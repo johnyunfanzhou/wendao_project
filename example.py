@@ -22,15 +22,17 @@ def batch_new_people(filename, **kwargs):
 		row_dict = row.to_dict()
 		node = People(**row_dict)
 
-		pid = row_dict.get('parent', None)
-		if pid is None:
+		pname = row_dict.get('parent', None)
+		if pname is None:
 			utils.add_root(node.id)
 		else:
-			pnode = utils.load_people_node(pid)
+			node.parent = utils.ID_MAP[pname]
+			pnode = utils.load_people_node(pname, is_id=False)
 			pnode.children.append(node.id)
 			pnode.dump_people_node()
 
 		node.dump_people_node()
+		utils.ID_MAP[node.name] = node.id
 		update_queue.append(node.id)
 
 		print('{} added.'.format(row_dict))
@@ -44,7 +46,7 @@ def batch_new_people(filename, **kwargs):
 
 
 def _payment(payer, amount, ptype, papply=False):
-	payer_node = utils.load_people_node(payer)
+	payer_node = utils.load_people_node(payer, is_id=False)
 
 	if papply:
 		def recurse_apply(node):
@@ -97,7 +99,7 @@ def batch_payment(filename: str, papply=False, **kwargs):
 	file format: csv
 	payer	amount	ptype
 	"""
-	df = pd.read_csv(filename)
+	df = pd.read_csv(filename, dtype={'payer': str, 'amount': float, 'ptype': str})
 	df['payer'] = df['payer'].fillna('')
 	df['amount'] = df['amount'].fillna(0.)
 	df['ptype'] = df['ptype'].fillna('')
