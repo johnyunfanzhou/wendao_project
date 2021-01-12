@@ -54,7 +54,7 @@ def batch_deactivate_people(name_list, **kwargs):
 
 		if node.parent is not None:
 			pnode = utils.load_people_node(node.parent)
-			pnode.children = [cid for cid in pnode.children if cid != node.id]
+			pnode.active_children = [cid for cid in pnode.active_children if cid != node.id]
 			pnode.dump_people_node()
 
 		node.dump_people_node()
@@ -78,8 +78,8 @@ def batch_activate_people(name_list, **kwargs):
 
 		if node.parent is not None:
 			pnode = utils.load_people_node(node.parent)
-			if node.id not in pnode.children:
-				pnode.children.append(node.id)
+			if node.id not in pnode.active_children:
+				pnode.active_children.append(node.id)
 			pnode.dump_people_node()
 
 		node.dump_people_node()

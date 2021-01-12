@@ -50,5 +50,6 @@ def patch():
 		with open(PEOPLE_NODE_FILENAME.format(i), 'r') as f:
 			node_dict = json.load(f)
 			node_dict['active'] = True
+			node_dict['active_children'] = node_dict['children']
 		with open(PEOPLE_NODE_FILENAME.format(i), 'w') as f:
 			json.dump(node_dict, f, indent=4)

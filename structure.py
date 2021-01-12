@@ -24,6 +24,7 @@ class People(object):
 		self.name = 'new_client'
 		self.active = True
 		self.children = []
+		self.active_children = []
 		self.num_children = 0
 
 		self.__dict__.update(kwargs)
@@ -48,7 +49,7 @@ class People(object):
 
 
 	def _get_num_children(self):
-		result = len(self.children)
+		result = len(self.active_children)
 		for cid in self.children:
 			cnode = utils.load_people_node(cid)
 			result += cnode._get_num_children()
