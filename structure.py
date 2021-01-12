@@ -22,6 +22,7 @@ class People(object):
 		self._incash_cache = 0.
 		self._outcash_cache = 0.
 		self.name = 'new_client'
+		self.active = True
 		self.children = []
 		self.num_children = 0
 

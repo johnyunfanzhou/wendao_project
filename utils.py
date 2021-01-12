@@ -25,9 +25,11 @@ def _id_map():
 
 ID_MAP = _id_map()
 
+
 def add_root(nid):
 	with open(ROOT_ID_FILE, 'a+') as f:
 		f.write(str(nid) + '\n')
+
 
 def load_people_node(nid, is_id=True):
 	"""name: str of username"""
@@ -39,3 +41,14 @@ def load_people_node(nid, is_id=True):
 		node_dict = json.load(f)
 	node = People(**node_dict)
 	return node
+
+
+def patch():
+	with open(ID_NUM_FILE, 'r') as f:
+		last = int(f.read())
+	for i in range(0, last):
+		with open(PEOPLE_NODE_FILENAME.format(i), 'r') as f:
+			node_dict = json.load(f)
+			node_dict['active'] = True
+		with open(PEOPLE_NODE_FILENAME.format(i), 'w') as f:
+			json.dump(node_dict, f, indent=4)

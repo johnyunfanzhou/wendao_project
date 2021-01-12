@@ -45,6 +45,55 @@ def batch_new_people(filename, **kwargs):
 		node.dump_people_node()
 
 
+def batch_deactivate_people(name_list, **kwargs):
+	update_queue = []
+	for name in name_list:
+		node = utils.load_people_node(name, is_id=False)
+		old_status = node.active
+		node.active = False
+
+		if node.parent is not None:
+			pnode = utils.load_people_node(node.parent)
+			pnode.children = [cid for cid in pnode.children if cid != node.id]
+			pnode.dump_people_node()
+
+		node.dump_people_node()
+		update_queue.append(node.id)
+		print('id: {}, name: {} was {}, now deactive.'.format(node.id, node.name, 'active' if old_status else 'deactive'))
+
+	# update metadata
+	print('Updating metadata ...')
+	for nid in update_queue:
+		node = utils.load_people_node(nid)
+		node.update_upward()
+		node.dump_people_node()
+
+
+def batch_activate_people(name_list, **kwargs):
+	update_queue = []
+	for name in name_list:
+		node = utils.load_people_node(name, is_id=False)
+		old_status = node.active
+		node.active = True
+
+		if node.parent is not None:
+			pnode = utils.load_people_node(node.parent)
+			if node.id not in pnode.children:
+				pnode.children.append(node.id)
+			pnode.dump_people_node()
+
+		node.dump_people_node()
+		update_queue.append(node.id)
+		print('id: {}, name: {} was {}, now active.'.format(node.id, node.name, 'active' if old_status else 'deactive'))
+
+	# update metadata
+	print('Updating metadata ...')
+	for nid in update_queue:
+		node = utils.load_people_node(nid)
+		node.update_upward()
+		node.dump_people_node()
+
+
 def _payment(payer, amount, ptype, papply=False):
 	payer_node = utils.load_people_node(payer, is_id=False)
 
@@ -121,18 +170,19 @@ def export_all(cache=False):
 	df_dict = {'id': [], 'name': [], 'incash': [], 'outcash': [], 'netcash': []}
 	for nid in range(i):
 		node = utils.load_people_node(nid)
-		if cache:
-			df_dict['id'].append(nid)
-			df_dict['name'].append(node.name)
-			df_dict['incash'].append(node.incash_cache)
-			df_dict['outcash'].append(node.outcash_cache)
-			df_dict['netcash'].append(node.incash_cache- node.outcash_cache)
-		else:
-			df_dict['id'].append(nid)
-			df_dict['name'].append(node.name)
-			df_dict['incash'].append(node.incash)
-			df_dict['outcash'].append(node.outcash)
-			df_dict['netcash'].append(node.incash - node.outcash)
+		if node.active:
+			if cache:
+				df_dict['id'].append(nid)
+				df_dict['name'].append(node.name)
+				df_dict['incash'].append(node.incash_cache)
+				df_dict['outcash'].append(node.outcash_cache)
+				df_dict['netcash'].append(node.incash_cache- node.outcash_cache)
+			else:
+				df_dict['id'].append(nid)
+				df_dict['name'].append(node.name)
+				df_dict['incash'].append(node.incash)
+				df_dict['outcash'].append(node.outcash)
+				df_dict['netcash'].append(node.incash - node.outcash)
 	df = pd.DataFrame(df_dict)
 	filename = 'output_cache.csv' if cache else 'output.csv'
 	with open(filename, 'w') as f:
@@ -156,14 +206,21 @@ def reset_all(cache=False):
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument('func', choices=['people', 'payment', 'apply', 'reset', 'reset_cache'])
+	parser.add_argument('func', choices=['people', 'activate', 'deactivate', 'payment', 'apply', 'reset', 'reset_cache'])
 	parser.add_argument('--file', type=str)
+	parser.add_argument('--name', type=str, nargs='+')
 	args = parser.parse_args()
 	if args.func in ['people', 'payment', 'apply'] and args.file is None:
 		parser.error('Function {} required --file.'.format(args.func))
+	if args.func in ['activate', 'deactivate'] and args.name is None:
+		parser.error('Function {} required --name.'.format(args.func))
 
 	if args.func == 'people':
 		batch_new_people(args.file)
+	if args.func == 'activate':
+		batch_activate_people(args.name)
+	if args.func == 'deactivate':
+		batch_deactivate_people(args.name)
 	if args.func == 'payment':
 		batch_payment(args.file)
 	if args.func == 'apply':

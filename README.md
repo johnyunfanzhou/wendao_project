@@ -27,9 +27,23 @@ python example.py people --file <people_file>
 people_file的格式：
 | name | parent | incash | outcash |
 | --- | --- | --- | --- |
-| 名字1(字符串) | 上级1(id) | 收入1(数字) | 支出1(数字) |
-| 名字2(字符串) | 上级2(id) | 收入2(数字) | 支出2(数字) |
+| 名字1(字符串) | 上级1(字符串) | 收入1(数字) | 支出1(数字) |
+| 名字2(字符串) | 上级2(字符串) | 收入2(数字) | 支出2(数字) |
 | ... | ... | ... | ... |
+
+## 停用/激活人
+
+停用：
+```
+python example.py deactivate --name [user1 [user2 [...]]]
+```
+
+激活：
+```
+python example.py activate --name [user1 [user2 [...]]]
+```
+
+指令里输入需要停用/激活的名字(字符串)。
 
 ## 付款
 ```
@@ -39,8 +53,8 @@ python example.py payment --file <payment_file>
 payment_file的格式：
 | payer | amount | type |
 | --- | --- | --- |
-| 付款人1(id) | 金额1(数字) | 类型1(字符串) |
-| 付款人2(id) | 金额2(数字) | 类型2(字符串) |
+| 付款人1(字符串) | 金额1(数字) | 类型1(字符串) |
+| 付款人2(字符串) | 金额2(数字) | 类型2(字符串) |
 | ... | ... | ... |
 
 此指令会计算所有账户并将结果保存在缓存参数里，并输出output_cache.csv文件。
