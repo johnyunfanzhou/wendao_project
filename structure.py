@@ -58,7 +58,7 @@ class People(object):
 
 	def update_upward(self):
 		self.num_children = self._get_num_children()
-		self.dump_people_node()
+		self.dump()
 		if self.parent is not None:
 			pnode = utils.load_people_node(self.parent)
 			pnode.update_upward()
