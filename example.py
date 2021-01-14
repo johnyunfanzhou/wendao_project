@@ -95,50 +95,35 @@ def batch_activate_people(name_list, **kwargs):
 		node.dump()
 
 
-def _payment(payer, amount, ptype, papply=False):
+def _payment(payer, amount, ptype):
 	payer_node = utils.load_people_node(payer, is_id=False)
-
-	if papply:
-		def recurse_apply(node):
-			node.incash += node.incash_cache
-			node.outcash += node.outcash_cache
-			node.incash_cache = 0
-			node.outcash_cache = 0
-			node.dump()
-			if node.parent is not None:
-				pnode = utils.load_people_node(node.parent)
-				recurse_apply(pnode)
-
-		recurse_apply(payer_node)
-		return
-
 	pb = utils.PERCENTAGE[ptype]
-	payer_node._outcash_cache += amount
+	payer_node._expense_cache += amount
 
-	def recurse_payback(node, pbamount, _out=True):
+	def recurse_payback(node, pbamount, _expense=True):
+		if not _expense:
+			node._outcash_cache += (pb['l1'] + pb['l2']) * pbamount
+			node.dump()
 		if node.parent is not None:
 			l1_node = utils.load_people_node(node.parent)
 			l1_node._incash_cache += pb['l1'] * pbamount
-			if not _out:
-				node._incash_cache -= pb['l1'] * pbamount
 
 			if l1_node.parent is not None:
 				l2_node = utils.load_people_node(l1_node.parent)
-				if l2_node.num_children >= utils.L2_THRESHOLD_NUM_PEOPLE:
+				if len(l2_node.active_children) >= utils.L2_THRESHOLD_NUM_PEOPLE:
 					l2_node._incash_cache += pb['l2'] * pbamount
 					l2_node.dump()
-					if not _out:
-						node._incash_cache -= pb['l2'] * pbamount
 
 			l1_node.dump()
-			node.dump()
-			recurse_payback(l1_node, l1_node._incash_cache, _out=False)
+			recurse_payback(l1_node, l1_node._incash_cache, _expense=False)
 
 	recurse_payback(payer_node, amount)
 
 	def recurse_cleanup(node):
+		node.expense_cache += node._expense_cache
 		node.incash_cache += node._incash_cache
 		node.outcash_cache += node._outcash_cache
+		node._expense_cache = 0
 		node._incash_cache = 0
 		node._outcash_cache = 0
 		node.dump()
@@ -160,32 +145,48 @@ def batch_payment(filename: str, papply=False, **kwargs):
 	df['ptype'] = df['ptype'].fillna('')
 	for idx, row in df.iterrows():
 		row_dict = row.to_dict()
-		_payment(**row_dict, papply=papply)
-		if not papply:
-			print('{} processed.'.format(row_dict))
+		_payment(**row_dict)
+		print('{} processed.'.format(row_dict))
+	export_all(cache=True)
 
-	if papply:
-		export_all()
-	else:
-		export_all(cache=True)
+
+def apply():
+	with open(utils.ID_NUM_FILE, 'r') as f:
+		last = int(f.read())
+	for i in range(0, last):
+		node = utils.load_people_node(i)
+		node.expense += node.expense_cache
+		node.incash += node.incash_cache
+		node.outcash += node.outcash_cache
+		node.expense_cache = 0
+		node.incash_cache = 0
+		node.outcash_cache = 0
+		node.dump()
+		if node.parent is not None:
+			pnode = utils.load_people_node(node.parent)
+			recurse_apply(pnode)
+
+	recurse_apply(payer_node)
 
 
 def export_all(cache=False):
 	with open(utils.ID_NUM_FILE, 'r') as f:
 		i = int(f.read())
-	df_dict = {'id': [], 'name': [], 'incash': [], 'outcash': [], 'netcash': []}
+	df_dict = {'id': [], 'name': [], 'expense': [], 'incash': [], 'outcash': [], 'netcash': []}
 	for nid in range(i):
 		node = utils.load_people_node(nid)
 		if node.active:
 			if cache:
 				df_dict['id'].append(nid)
 				df_dict['name'].append(node.name)
+				df_dict['expense'].append(node.expense_cache)
 				df_dict['incash'].append(node.incash_cache)
 				df_dict['outcash'].append(node.outcash_cache)
 				df_dict['netcash'].append(node.incash_cache- node.outcash_cache)
 			else:
 				df_dict['id'].append(nid)
 				df_dict['name'].append(node.name)
+				df_dict['expense'].append(node.expense_cache)
 				df_dict['incash'].append(node.incash)
 				df_dict['outcash'].append(node.outcash)
 				df_dict['netcash'].append(node.incash - node.outcash)
@@ -216,7 +217,7 @@ if __name__ == '__main__':
 	parser.add_argument('--file', type=str)
 	parser.add_argument('--name', type=str, nargs='+')
 	args = parser.parse_args()
-	if args.func in ['people', 'payment', 'apply'] and args.file is None:
+	if args.func in ['people', 'payment'] and args.file is None:
 		parser.error('Function {} required --file.'.format(args.func))
 	if args.func in ['activate', 'deactivate'] and args.name is None:
 		parser.error('Function {} required --name.'.format(args.func))
@@ -230,7 +231,7 @@ if __name__ == '__main__':
 	if args.func == 'payment':
 		batch_payment(args.file)
 	if args.func == 'apply':
-		batch_payment(args.file, papply=True)
+		apply()
 	if args.func == 'reset_cache':
 		reset_all(cache=True)
 	if args.func == 'reset':

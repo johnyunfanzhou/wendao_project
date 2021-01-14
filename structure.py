@@ -15,10 +15,13 @@ class People(object):
 		"""
 		self.id = None
 		self.parent = None
+		self.expense = 0.
 		self.incash = 0.
 		self.outcash = 0.
+		self.expense_cache = 0.
 		self.incash_cache = 0.
 		self.outcash_cache = 0.
+		self._expense_cache = 0.
 		self._incash_cache = 0.
 		self._outcash_cache = 0.
 		self.name = 'new_client'
