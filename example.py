@@ -29,6 +29,7 @@ def batch_new_people(filename, **kwargs):
 			node.parent = utils.ID_MAP[pname]
 			pnode = utils.load_people_node(pname, is_id=False)
 			pnode.children.append(node.id)
+			pnode.active_children.append(node.id)
 			pnode.dump()
 
 		node.dump()
