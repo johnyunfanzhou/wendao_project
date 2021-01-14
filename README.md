@@ -61,10 +61,10 @@ payment_file的格式：
 
 ## 确认付款
 ```
-python example.py apply --file <payment_file>
+python example.py apply
 ```
 
-payment_file的格式同上。此指令把缓存参数里的计算结果复写在数据里，并输出output.csv文件。
+此指令把s所有缓存参数里的计算结果复写在数据里，并输出output.csv文件。
 
 ## 重置所有缓存参数
 ```
