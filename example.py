@@ -29,9 +29,9 @@ def batch_new_people(filename, **kwargs):
 			node.parent = utils.ID_MAP[pname]
 			pnode = utils.load_people_node(pname, is_id=False)
 			pnode.children.append(node.id)
-			pnode.dump_people_node()
+			pnode.dump()
 
-		node.dump_people_node()
+		node.dump()
 		utils.ID_MAP[node.name] = node.id
 		update_queue.append(node.id)
 
@@ -42,7 +42,7 @@ def batch_new_people(filename, **kwargs):
 	for nid in update_queue:
 		node = utils.load_people_node(nid)
 		node.update_upward()
-		node.dump_people_node()
+		node.dump()
 
 
 def batch_deactivate_people(name_list, **kwargs):
@@ -55,9 +55,9 @@ def batch_deactivate_people(name_list, **kwargs):
 		if node.parent is not None:
 			pnode = utils.load_people_node(node.parent)
 			pnode.active_children = [cid for cid in pnode.active_children if cid != node.id]
-			pnode.dump_people_node()
+			pnode.dump()
 
-		node.dump_people_node()
+		node.dump()
 		update_queue.append(node.id)
 		print('id: {}, name: {} was {}, now deactive.'.format(node.id, node.name, 'active' if old_status else 'deactive'))
 
@@ -66,7 +66,7 @@ def batch_deactivate_people(name_list, **kwargs):
 	for nid in update_queue:
 		node = utils.load_people_node(nid)
 		node.update_upward()
-		node.dump_people_node()
+		node.dump()
 
 
 def batch_activate_people(name_list, **kwargs):
@@ -80,9 +80,9 @@ def batch_activate_people(name_list, **kwargs):
 			pnode = utils.load_people_node(node.parent)
 			if node.id not in pnode.active_children:
 				pnode.active_children.append(node.id)
-			pnode.dump_people_node()
+			pnode.dump()
 
-		node.dump_people_node()
+		node.dump()
 		update_queue.append(node.id)
 		print('id: {}, name: {} was {}, now active.'.format(node.id, node.name, 'active' if old_status else 'deactive'))
 
@@ -91,7 +91,7 @@ def batch_activate_people(name_list, **kwargs):
 	for nid in update_queue:
 		node = utils.load_people_node(nid)
 		node.update_upward()
-		node.dump_people_node()
+		node.dump()
 
 
 def _payment(payer, amount, ptype, papply=False):
@@ -103,7 +103,7 @@ def _payment(payer, amount, ptype, papply=False):
 			node.outcash += node.outcash_cache
 			node.incash_cache = 0
 			node.outcash_cache = 0
-			node.dump_people_node()
+			node.dump()
 			if node.parent is not None:
 				pnode = utils.load_people_node(node.parent)
 				recurse_apply(pnode)
@@ -114,19 +114,24 @@ def _payment(payer, amount, ptype, papply=False):
 	pb = utils.PERCENTAGE[ptype]
 	payer_node._outcash_cache += amount
 
-	def recurse_payback(node, pbamount):
+	def recurse_payback(node, pbamount, _out=True):
 		if node.parent is not None:
 			l1_node = utils.load_people_node(node.parent)
 			l1_node._incash_cache += pb['l1'] * pbamount
-			l1_node.dump_people_node()
+			if not _out:
+				node._incash_cache -= pb['l1'] * pbamount
 
 			if l1_node.parent is not None:
 				l2_node = utils.load_people_node(l1_node.parent)
 				if l2_node.num_children >= utils.L2_THRESHOLD_NUM_PEOPLE:
 					l2_node._incash_cache += pb['l2'] * pbamount
-					l2_node.dump_people_node()
+					l2_node.dump()
+					if not _out:
+						node._incash_cache -= pb['l2'] * pbamount
 
-			recurse_payback(l1_node, l1_node._incash_cache)
+			l1_node.dump()
+			node.dump()
+			recurse_payback(l1_node, l1_node._incash_cache, _out=False)
 
 	recurse_payback(payer_node, amount)
 
@@ -135,7 +140,7 @@ def _payment(payer, amount, ptype, papply=False):
 		node.outcash_cache += node._outcash_cache
 		node._incash_cache = 0
 		node._outcash_cache = 0
-		node.dump_people_node()
+		node.dump()
 		if node.parent is not None:
 			pnode = utils.load_people_node(node.parent)
 			recurse_cleanup(pnode)
@@ -201,7 +206,7 @@ def reset_all(cache=False):
 		node.outcash_cache = 0.
 		node._incash_cache = 0.
 		node._outcash_cache = 0.
-		node.dump_people_node()
+		node.dump()
 
 
 if __name__ == '__main__':

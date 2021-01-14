@@ -40,7 +40,7 @@ class People(object):
 		self.id = i
 
 
-	def dump_people_node(self):
+	def dump(self):
 		if self.id is None:
 			self.assign_id()
 		filename = utils.PEOPLE_NODE_FILENAME.format(self.id)
