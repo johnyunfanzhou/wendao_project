@@ -22,6 +22,9 @@ def batch_new_people(filename, **kwargs):
 		row_dict = row.to_dict()
 		node = People(**row_dict)
 
+		if utils.ID_MAP.get(node.name, None) is not None:
+				raise ValueError('Duplicated username found in id: {}, name: {}'.format(i, utils.ID_MAP[node.name]))
+
 		pname = row_dict.get('parent', None)
 		if pname is None:
 			utils.add_root(node.id)
