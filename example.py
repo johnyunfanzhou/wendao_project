@@ -165,17 +165,14 @@ def apply():
 		node.incash_cache = 0
 		node.outcash_cache = 0
 		node.dump()
-		if node.parent is not None:
-			pnode = utils.load_people_node(node.parent)
-			recurse_apply(pnode)
-
-	recurse_apply(payer_node)
+	
+	export_all()
 
 
 def export_all(cache=False):
 	with open(utils.ID_NUM_FILE, 'r') as f:
 		i = int(f.read())
-	df_dict = {'id': [], 'name': [], 'expense': [], 'incash': [], 'outcash': [], 'netcash': []}
+	df_dict = {'id': [], 'name': [], 'netcash': [], 'expense': [], 'incash': [], 'outcash': []}
 	for nid in range(i):
 		node = utils.load_people_node(nid)
 		if node.active:
@@ -185,7 +182,7 @@ def export_all(cache=False):
 				df_dict['expense'].append(node.expense_cache)
 				df_dict['incash'].append(node.incash_cache)
 				df_dict['outcash'].append(node.outcash_cache)
-				df_dict['netcash'].append(node.incash_cache- node.outcash_cache)
+				df_dict['netcash'].append(node.incash_cache - node.outcash_cache)
 			else:
 				df_dict['id'].append(nid)
 				df_dict['name'].append(node.name)
@@ -205,10 +202,13 @@ def reset_all(cache=False):
 	for nid in range(i):
 		node = utils.load_people_node(nid)
 		if not cache:
+			node.expense = 0.
 			node.incash = 0.
 			node.outcash = 0.
+		node.expense_cache = 0.
 		node.incash_cache = 0.
 		node.outcash_cache = 0.
+		node._expense_cache = 0.
 		node._incash_cache = 0.
 		node._outcash_cache = 0.
 		node.dump()
