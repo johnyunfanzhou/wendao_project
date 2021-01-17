@@ -20,11 +20,10 @@ def batch_new_people(filename, **kwargs):
 
 	for idx, row in df.iterrows():
 		row_dict = row.to_dict()
+		if utils.ID_MAP.get(row_dict['name'], None) is not None:
+				raise ValueError('Duplicated username found in id: {}, name: {}'.format(utils.ID_MAP[row_dict['name']], row_dict['name']))
+
 		node = People(**row_dict)
-
-		if utils.ID_MAP.get(node.name, None) is not None:
-				raise ValueError('Duplicated username found in id: {}, name: {}'.format(i, utils.ID_MAP[node.name]))
-
 		pname = row_dict.get('parent', None)
 		if pname is None:
 			utils.add_root(node.id)
@@ -39,7 +38,7 @@ def batch_new_people(filename, **kwargs):
 		utils.ID_MAP[node.name] = node.id
 		update_queue.append(node.id)
 
-		print('{} added.'.format(row_dict))
+		print('id: {}, {} added.'.format('WD00000'[:-len(str(node.id))] + str(node.id), row_dict))
 
 	# update metadata
 	print('Updating metadata ...')
@@ -47,6 +46,8 @@ def batch_new_people(filename, **kwargs):
 		node = utils.load_people_node(nid)
 		node.update_upward()
 		node.dump()
+
+	export_all(people=True)
 
 
 def batch_deactivate_people(name_list, **kwargs):
@@ -169,31 +170,37 @@ def apply():
 	export_all()
 
 
-def export_all(cache=False):
+def export_all(people=False, cache=False):
 	with open(utils.ID_NUM_FILE, 'r') as f:
 		i = int(f.read())
 	df_dict = {'id': [], 'name': [], 'netcash': [], 'expense': [], 'incash': [], 'outcash': []}
 	for nid in range(i):
 		node = utils.load_people_node(nid)
+		nid_str = 'WD00000'[:-len(str(nid))] + str(nid)
 		if node.active:
 			if cache:
-				df_dict['id'].append(nid)
+				df_dict['id'].append(nid_str)
 				df_dict['name'].append(node.name)
 				df_dict['expense'].append(node.expense_cache)
 				df_dict['incash'].append(node.incash_cache)
 				df_dict['outcash'].append(node.outcash_cache)
 				df_dict['netcash'].append(node.incash_cache - node.outcash_cache)
 			else:
-				df_dict['id'].append(nid)
+				df_dict['id'].append(nid_str)
 				df_dict['name'].append(node.name)
 				df_dict['expense'].append(node.expense_cache)
 				df_dict['incash'].append(node.incash)
 				df_dict['outcash'].append(node.outcash)
 				df_dict['netcash'].append(node.incash - node.outcash)
 	df = pd.DataFrame(df_dict)
-	filename = 'output_cache.csv' if cache else 'output.csv'
-	with open(filename, 'w') as f:
-		df.to_csv(f, index=False, line_terminator='\n')
+	if people:
+		filename = 'output_id.csv'
+		with open(filename, 'w') as f:
+			df[['id', 'name']].to_csv(f, index=False, line_terminator='\n')
+	else:
+		filename = 'output_cache.csv' if cache else 'output.csv'
+		with open(filename, 'w') as f:
+			df.to_csv(f, index=False, line_terminator='\n')
 
 
 def reset_all(cache=False):
