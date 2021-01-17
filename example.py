@@ -173,21 +173,37 @@ def apply():
 def export_all(people=False, cache=False):
 	with open(utils.ID_NUM_FILE, 'r') as f:
 		i = int(f.read())
-	df_dict = {'id': [], 'name': [], 'netcash': [], 'expense': [], 'incash': [], 'outcash': []}
+	df_dict = {'id': [], 'name': [], 'parent1_id': [], 'parent1_name': [], 'parent2_id': [], 'parent2_name': [], 'netcash': [], 'expense': [], 'incash': [], 'outcash': []}
 	for nid in range(i):
 		node = utils.load_people_node(nid)
 		nid_str = 'WD00000'[:-len(str(nid))] + str(nid)
 		if node.active:
+			df_dict['id'].append(nid_str)
+			df_dict['name'].append(node.name)
+
+			if node.parent is not None:
+				pnode = utils.load_people_node(node.parent)
+				df_dict['parent1_id'].append('WD00000'[:-len(str(pnode.id))] + str(pnode.id))
+				df_dict['parent1_name'].append(pnode.name)
+				if pnode.parent is not None:
+					ppnode = utils.load_people_node(pnode.parent)
+					df_dict['parent2_id'].append('WD00000'[:-len(str(ppnode.id))] + str(ppnode.id))
+					df_dict['parent2_name'].append(ppnode.name)
+				else:
+					df_dict['parent2_id'].append('')
+					df_dict['parent2_name'].append('')
+			else:
+				df_dict['parent1_id'].append('')
+				df_dict['parent1_name'].append('')
+				df_dict['parent2_id'].append('')
+				df_dict['parent2_name'].append('')
+
 			if cache:
-				df_dict['id'].append(nid_str)
-				df_dict['name'].append(node.name)
 				df_dict['expense'].append(node.expense_cache)
 				df_dict['incash'].append(node.incash_cache)
 				df_dict['outcash'].append(node.outcash_cache)
 				df_dict['netcash'].append(node.incash_cache - node.outcash_cache)
 			else:
-				df_dict['id'].append(nid_str)
-				df_dict['name'].append(node.name)
 				df_dict['expense'].append(node.expense_cache)
 				df_dict['incash'].append(node.incash)
 				df_dict['outcash'].append(node.outcash)
@@ -196,11 +212,11 @@ def export_all(people=False, cache=False):
 	if people:
 		filename = 'output_id.csv'
 		with open(filename, 'w') as f:
-			df[['id', 'name']].to_csv(f, index=False, line_terminator='\n')
+			df[['id', 'name', 'parent1_id', 'parent1_name', 'parent2_id', 'parent2_name']].to_csv(f, index=False, line_terminator='\n')
 	else:
 		filename = 'output_cache.csv' if cache else 'output.csv'
 		with open(filename, 'w') as f:
-			df.to_csv(f, index=False, line_terminator='\n')
+			df[['id', 'name', 'netcash', 'expense', 'incash', 'outcash']].to_csv(f, index=False, line_terminator='\n')
 
 
 def reset_all(cache=False):
@@ -223,7 +239,7 @@ def reset_all(cache=False):
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument('func', choices=['people', 'activate', 'deactivate', 'payment', 'apply', 'reset', 'reset_cache'])
+	parser.add_argument('func', choices=['people', 'activate', 'deactivate', 'payment', 'apply', 'export', 'reset', 'reset_cache'])
 	parser.add_argument('--file', type=str)
 	parser.add_argument('--name', type=str, nargs='+')
 	args = parser.parse_args()
@@ -242,6 +258,10 @@ if __name__ == '__main__':
 		batch_payment(args.file)
 	if args.func == 'apply':
 		apply()
+	if args.func == 'export':
+		export_all(people=True)
+		export_all(cache=True)
+		export_all()
 	if args.func == 'reset_cache':
 		reset_all(cache=True)
 	if args.func == 'reset':

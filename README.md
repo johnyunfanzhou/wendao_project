@@ -24,6 +24,8 @@ file: 数据文件
 python example.py people --file <people_file>
 ```
 
+输出output_id.csv文件。
+
 people_file的格式：
 | name | parent | incash | outcash |
 | --- | --- | --- | --- |
@@ -65,6 +67,13 @@ python example.py apply
 ```
 
 此指令把s所有缓存参数里的计算结果复写在数据里，并输出output.csv文件。
+
+## 导出
+```
+python example.py export
+```
+
+重新反映现在的数据并输出output_id.csv，output_cache.csv，和output.csv文件。仅输出，不对数据做任何更改。
 
 ## 重置所有缓存参数
 ```
