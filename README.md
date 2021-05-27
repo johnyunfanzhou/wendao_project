@@ -26,6 +26,11 @@ python example.py people --file <people_file>
 
 输出output_id.csv文件。
 
+例如：
+```
+python example.py people --file people_0.csv
+```
+
 people_file的格式：
 | name | parent | incash | outcash |
 | --- | --- | --- | --- |
@@ -50,6 +55,11 @@ python example.py activate --name [user1 [user2 [...]]]
 ## 付款
 ```
 python example.py payment --file <payment_file>
+```
+
+例如：
+```
+python example.py payment --file payment_0.csv
 ```
 
 payment_file的格式：
